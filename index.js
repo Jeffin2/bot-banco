@@ -1,51 +1,53 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+require("dotenv").config();
+
+const express = require("express");
+const app = express();
 
 const { Client, GatewayIntentBits } = require("discord.js");
 
 const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
-    ]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
 const prefix = "!";
 
-// COLOQUE O ID DO CANAL DO BANCO AQUI
-const canalBanco = "1482846703865434283";
+// 🌐 Servidor web (necessário pro Render)
+const PORT = process.env.PORT || 3000;
 
-client.once("ready", () => {
-
-    console.log("💰 Bot de banco online!");
-
+app.get("/", (req, res) => {
+  res.send("Bot está online!");
 });
 
+app.listen(PORT, () => {
+  console.log("Servidor web rodando!");
+});
+
+// 🤖 Bot pronto
+client.once("ready", () => {
+  console.log("Bot de economia online!");
+});
+
+// 📩 Sistema de comandos
 client.on("messageCreate", async (message) => {
 
-    if (message.author.bot) return;
+  if (message.author.bot) return;
+  if (!message.content.startsWith(prefix)) return;
 
-    // só funciona no canal do banco
-    if (message.channel.id !== canalBanco) return;
+  const args = message.content.slice(prefix.length).split(" ");
+  const cmd = args.shift().toLowerCase();
 
-    if (!message.content.startsWith(prefix)) return;
-
-    const args = message.content.slice(prefix.length).split(" ");
-    const cmd = args.shift().toLowerCase();
-
-    try {
-
-        const comando = require(`./comandos/${cmd}.js`);
-
-        comando.run(message, args);
-
-    } catch (error) {
-
-        console.log("Comando não encontrado:", cmd);
-
-    }
+  try {
+    const comando = require(`./comandos/${cmd}.js`);
+    comando.run(message, args);
+  } catch (error) {
+    // comando não existe (silencioso)
+  }
 
 });
 
-require("dotenv").config();
+// 🔐 Login seguro
 client.login(process.env.TOKEN);
